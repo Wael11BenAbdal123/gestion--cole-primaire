@@ -1,5 +1,5 @@
 
-```markdown
+
 🏫 Application de gestion d’école primaire
 
 Ce projet est une application de gestion scolaire destinée à une école primaire. Elle permet de gérer les élèves, les enseignants, les classes, les matières et les bulletins de notes.
@@ -15,14 +15,14 @@ Ce projet est une application de gestion scolaire destinée à une école primai
 
 
 📁 Structure du projet
-```
+
 resources/
 ├── backend/              # Code source C# (.NET)
 ├── database/             # Scripts SQL Server (tables, procédures, triggers)
 ├── frontend/             # Interfaces HTML/CSS/JS
 ├── maquettes/            # Wireframes et maquettes UI
 ├── README.md             # Documentation du projet
-```
+
 
 📸 Aperçu
 ![Interface principale](resources/screenshot-dashboard.png)
