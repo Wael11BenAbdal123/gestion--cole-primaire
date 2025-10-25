@@ -1,31 +1,41 @@
-# 🏫 Application de gestion d’école primaire
+
+```markdown
+🏫 Application de gestion d’école primaire
 
 Ce projet est une application de gestion scolaire destinée à une école primaire. Elle permet de gérer les élèves, les enseignants, les classes, les matières et les bulletins de notes.
 
-## 🎯 Objectifs
+🎯 Objectifs
 - Centraliser les informations des élèves et enseignants
 - Gérer les inscriptions, les absences et les notes
 - Générer des bulletins scolaires automatiquement
 
-## 🛠️ Technologies utilisées
-- Backend : Java / PHP
-- Base de données : MySQL
-- Frontend : HTML / CSS / JavaScript
+🛠️ Technologies utilisées
+- Backend : C# avec .NET Framework
+- Base de données : SQL Server
 
-## 📁 Structure du projet
-- `resources/` : contient tous les fichiers source du projet (code, base de données, maquettes, etc.)
-- `README.md` : documentation du projet
 
-## 📸 Aperçu
+📁 Structure du projet
+```
+resources/
+├── backend/              # Code source C# (.NET)
+├── database/             # Scripts SQL Server (tables, procédures, triggers)
+├── frontend/             # Interfaces HTML/CSS/JS
+├── maquettes/            # Wireframes et maquettes UI
+├── README.md             # Documentation du projet
+```
+
+📸 Aperçu
 ![Interface principale](resources/screenshot-dashboard.png)
 
-## 🚀 Fonctionnalités principales
+🚀 Fonctionnalités principales
 - Ajout / modification / suppression d’élèves et enseignants
 - Gestion des classes et des matières
 - Saisie des notes et calcul des moyennes
 - Génération automatique des bulletins
 - Interface utilisateur simple et intuitive
 
-## 👨‍💻 Réalisé par
+👨‍💻 Réalisé par
 Wael Ben Abdallah – Étudiant en Informatique de Gestion à l’ISAAS Sfax  
-Spécialité : Business Intelligence & Développement Web
+Spécialité : Business Intelligence & Développement Web avec C# .NET et SQL Server
+
+
