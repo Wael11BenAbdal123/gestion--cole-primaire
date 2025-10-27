@@ -1,0 +1,169 @@
+-- Création de la base de données
+CREATE DATABASE GestionEcolePrimaire;
+GO
+USE GestionEcolePrimaire;
+GO
+-- Table des niveaux (e.g., CP, CE1, etc.)
+CREATE TABLE Niveaux (
+    Code_Niveau INT PRIMARY KEY, -- Pas d'IDENTITY
+    Libelle_Niveau VARCHAR(50) NOT NULL, -- Remplace CHAR(50) ou NVARCHAR(50) par VARCHAR(50)
+    Nb_Horaire_Niveau INT NOT NULL
+);
+-- Eleve
+CREATE TABLE Eleve (
+    Num_Ins_Eleve INT PRIMARY KEY, -- Numéro d'inscription unique
+    Nom_Eleve VARCHAR(50) NOT NULL, -- Nom de l'élève
+    Prenom_Eleve VARCHAR(50) NOT NULL, -- Prénom de l'élève
+    Sexe_Eleve CHAR(1) CHECK (Sexe_Eleve IN ('M', 'F')), -- Sexe: 'M' pour masculin, 'F' pour féminin
+    Date_Nais_Eleve DATE NOT NULL, -- Date de naissance
+    Lieu_Nais_Eleve VARCHAR(100) NOT NULL -- Lieu de naissance
+);
+CREATE TABLE Parent (
+    Code_Par INT PRIMARY KEY ,  -- Auto-incrémenté pour simplifier l'insertion
+    Nom_Parent VARCHAR(50) NOT NULL,
+    Prenom_Parent VARCHAR(50) NOT NULL,
+    Profession_Parent VARCHAR(100),
+    Email_Parent VARCHAR(100) CHECK (
+        Email_Parent LIKE '%_@__%.__%'  -- Validation basique d'email
+    ),
+    Telephone_Parent VARCHAR(20) NOT NULL,  -- Ajout du numéro de téléphone comme demandé
+    Telephone_Secondaire VARCHAR(20),  -- Numéro secondaire optionnel
+    Adresse_Parent VARCHAR(255),
+    Ville_Parent VARCHAR(100),  -- Champ séparé pour la ville
+    Code_Postal VARCHAR(10),  -- Champ séparé pour le code postal
+    Est_Tuteur_Principal BIT DEFAULT 1,  -- Indique si c'est le tuteur principal
+    Date_Creation DATETIME DEFAULT GETDATE(),  -- Audit de création
+    Date_Mise_A_Jour DATETIME DEFAULT GETDATE()  -- Audit de modification
+);
+
+-- Création d'un index pour les recherches par téléphone
+CREATE INDEX IX_Parent_Telephone ON Parent(Telephone_Parent);
+-- Tutuers 
+-- Table intermédiaire Tuteurs (relation m-n entre Parent et Eleve)
+CREATE TABLE Tuteurs (
+    Code_Par INT NOT NULL, -- Référence au parent
+    Num_Ins_Eleve INT NOT NULL, -- Référence à l'élève
+    Lien_Parente VARCHAR(50) NOT NULL, -- Lien de parenté (ex : Père, Mère, Tuteur légal, etc.)
+    PRIMARY KEY (Code_Par, Num_Ins_Eleve), -- Clé primaire composée
+    CONSTRAINT FK_Tuteurs_Parent FOREIGN KEY (Code_Par) REFERENCES Parent(Code_Par),
+    CONSTRAINT FK_Tuteurs_Eleve FOREIGN KEY (Num_Ins_Eleve) REFERENCES Eleve(Num_Ins_Eleve)
+);
+-- Table Année Scolaire
+CREATE TABLE AnneeScolaire (
+    Code_Annee INT PRIMARY KEY, -- Identifiant unique pour l'année scolaire
+    Libelle_Annee VARCHAR(20) NOT NULL -- Libellé de l'année scolaire (ex: "2024/2025")
+);
+-- Table Trimestre
+CREATE TABLE Trimestre (
+    Code_Trimestre INT PRIMARY KEY, -- Identifiant unique pour le trimestre
+    Libelle_Trimestre VARCHAR(20) NOT NULL -- Nom du trimestre (ex: "Trimestre 1")
+);
+-- Table Matiere
+CREATE TABLE Matiere (
+    Code_Matiere INT PRIMARY KEY, -- Identifiant unique pour la matière
+    Code_Niveau INT NOT NULL, -- Référence au niveau (clé étrangère)
+    Libelle_Matiere VARCHAR(100) NOT NULL, -- Libellé de la matière (nom de la matière)
+    Coefficient_Matiere DECIMAL(5, 2) NOT NULL, -- Coefficient de la matière
+    CONSTRAINT FK_Matiere_Niveau FOREIGN KEY (Code_Niveau) REFERENCES Niveaux(Code_Niveau) -- Relation avec la table Niveaux
+);
+-- Table Classe
+CREATE TABLE Classe (
+    Code_Classe INT PRIMARY KEY, -- Identifiant unique pour la classe
+    Code_Niveau INT NOT NULL, -- Référence au niveau (clé étrangère)
+    Libelle_Classe VARCHAR(50) NOT NULL, -- Nom ou libellé de la classe
+    Capacite_Max_Eleve INT NOT NULL, -- Nombre maximum d'élèves autorisés dans la classe
+    Nb_Actuel_Eleve INT NOT NULL, -- Nombre d'élèves actuellement inscrits
+    CONSTRAINT FK_Classe_Niveau FOREIGN KEY (Code_Niveau) REFERENCES Niveaux(Code_Niveau), -- Relation avec la table Niveaux
+    CONSTRAINT CHK_Capacite CHECK (Nb_Actuel_Eleve <= Capacite_Max_Eleve) -- Vérifie que la classe ne dépasse pas sa capacité
+);
+CREATE TABLE Utilisateur (
+    Code_Utilisateur INT PRIMARY KEY,  -- Auto-incrémenté
+    Nom_Utilisateur VARCHAR(50) UNIQUE NOT NULL,     -- Login unique
+    Mot_De_Passe_Hash VARCHAR(255) NOT NULL,         -- Mot de passe crypté
+    Role_Utilisateur VARCHAR(20) NOT NULL 
+        CHECK (Role_Utilisateur IN ('Admin', 'Enseignant', 'Parent', 'Secretariat')),
+    Email VARCHAR(100) 
+        CHECK (Email LIKE '%_@__%.__%'),             -- Validation email
+    Date_Creation DATETIME NOT NULL DEFAULT GETDATE(),
+    Date_Derniere_Connexion DATETIME NULL,
+    Est_Actif BIT NOT NULL DEFAULT 1,
+    Tentatives_Connexion INT DEFAULT 0,
+    Date_Verrouillage DATETIME NULL,
+    -- Contrainte pour empêcher les emails en double
+    CONSTRAINT UQ_Utilisateur_Email UNIQUE (Email)
+);
+
+-- Table Enseignant
+CREATE TABLE Enseignant (
+    Code_Utilisateur INT PRIMARY KEY, -- Identifiant unique pour l'enseignant (même que Code_Utilisateur dans Utilisateur)
+    Nom VARCHAR(50) NOT NULL, -- Nom de l'enseignant
+    Prenom VARCHAR(50) NOT NULL, -- Prénom de l'enseignant
+    Sexe CHAR(1) NOT NULL CHECK (Sexe IN ('M', 'F')), -- Sexe : 'M' pour masculin, 'F' pour féminin
+    Reside VARCHAR(255) NOT NULL, -- Adresse de résidence de l'enseignant
+    Contact VARCHAR(20), -- Numéro de téléphone de l'enseignant
+    Statut VARCHAR(20) NOT NULL CHECK (Statut IN ('Actif', 'Inactif', 'Suspendu')), -- Statut : Actif, Inactif, Suspendu
+    CONSTRAINT FK_Enseignant_Utilisateur FOREIGN KEY (Code_Utilisateur) REFERENCES Utilisateur(Code_Utilisateur) -- Relation avec Utilisateur
+);
+-- Table Enseignant_Annee
+CREATE TABLE Enseignant_Annee (
+    Code_Enseignant INT NOT NULL, -- Référence à l'enseignant
+    Code_Annee INT NOT NULL, -- Référence à l'année scolaire
+    PRIMARY KEY (Code_Enseignant, Code_Annee), -- Clé primaire composée
+    CONSTRAINT FK_Enseignant_Annee_Enseignant FOREIGN KEY (Code_Enseignant) REFERENCES Enseignant(Code_Utilisateur), -- Relation avec Enseignant
+    CONSTRAINT FK_Enseignant_Annee_Annee FOREIGN KEY (Code_Annee) REFERENCES AnneeScolaire(Code_Annee) -- Relation avec AnneeScolaire
+);
+-- Table Responsabilites_Enseignant
+CREATE TABLE Responsabilites_Enseignant (
+    Code_Enseignant INT NOT NULL, -- Référence à l'enseignant
+    Code_Matiere INT NOT NULL, -- Référence à la matière
+    PRIMARY KEY (Code_Enseignant, Code_Matiere), -- Clé primaire composée
+    CONSTRAINT FK_Responsabilites_Enseignant_Enseignant FOREIGN KEY (Code_Enseignant) REFERENCES Enseignant(Code_Utilisateur), -- Relation avec Enseignant
+    CONSTRAINT FK_Responsabilites_Enseignant_Matiere FOREIGN KEY (Code_Matiere) REFERENCES Matiere(Code_Matiere) -- Relation avec Matiere
+);
+-- Table Affectations_Classe
+CREATE TABLE Affectations_Classe (
+    Code_Enseignant INT NOT NULL, -- Référence à l'enseignant
+    Code_Classe INT NOT NULL, -- Référence à la classe
+    PRIMARY KEY (Code_Enseignant, Code_Classe), -- Clé primaire composée
+    CONSTRAINT FK_Affectations_Enseignant FOREIGN KEY (Code_Enseignant) REFERENCES Enseignant(Code_Utilisateur), -- Relation avec Enseignant
+    CONSTRAINT FK_Affectations_Classe FOREIGN KEY (Code_Classe) REFERENCES Classe(Code_Classe) -- Relation avec Classe
+);
+CREATE TABLE Inscription (
+    EleveID INT NOT NULL,
+    NiveauID INT NOT NULL,
+    AnneeID INT NOT NULL,
+    ClasseID INT NULL, -- NULL permis pour non-affectés
+    DateInscription DATETIME NOT NULL DEFAULT GETDATE(),
+    Statut VARCHAR(20) NOT NULL DEFAULT 'En attente'
+        CHECK (Statut IN ('En attente', 'Affecté', 'Rejeté')),
+    PRIMARY KEY (EleveID, NiveauID, AnneeID),
+    FOREIGN KEY (EleveID) REFERENCES Eleve(Num_Ins_Eleve),
+    FOREIGN KEY (NiveauID) REFERENCES Niveaux(Code_Niveau),
+    FOREIGN KEY (AnneeID) REFERENCES AnneeScolaire(Code_Annee),
+    FOREIGN KEY (ClasseID) REFERENCES Classe(Code_Classe),
+    CONSTRAINT CHK_Affectation CHECK (
+        (ClasseID IS NULL AND Statut = 'En attente') OR
+        (ClasseID IS NOT NULL AND Statut = 'Affecté')
+    )
+);
+CREATE TABLE Note (
+    NoteID INT PRIMARY KEY IDENTITY(1,1),
+    EleveID INT NOT NULL,
+    MatiereID INT NOT NULL,
+    SeanceExamenID INT NOT NULL,
+    AnneeScolaireID INT NOT NULL,
+    NiveauID INT NOT NULL, -- Ajout explicite du NiveauID
+    TypeEvaluation VARCHAR(20) NOT NULL DEFAULT 'Examen' 
+        CHECK (TypeEvaluation IN ('Examen', 'Devoir', 'Projet', 'Oral')),
+    ValeurNote DECIMAL(5,2) NOT NULL CHECK (ValeurNote BETWEEN 0 AND 20),
+    Code_Enseignant INT NOT NULL,
+    DateSaisie DATETIME DEFAULT GETDATE(),
+    Commentaire VARCHAR(255),
+    FOREIGN KEY (EleveID) REFERENCES Eleve(Num_Ins_Eleve),
+    FOREIGN KEY (MatiereID) REFERENCES Matiere(Code_Matiere),
+    FOREIGN KEY (SeanceExamenID) REFERENCES Trimestre(Code_Trimestre),
+    FOREIGN KEY (AnneeScolaireID) REFERENCES AnneeScolaire(Code_Annee),
+    FOREIGN KEY (Code_Enseignant) REFERENCES Enseignant(Code_Utilisateur),
+    FOREIGN KEY (EleveID, NiveauID, AnneeScolaireID) REFERENCES Inscription(EleveID, NiveauID, AnneeID),
+    CONSTRAINT UQ_Note_Evaluation UNIQUE (EleveID, MatiereID, SeanceExamenID, TypeEvaluation, AnneeScolaireID)
+);
